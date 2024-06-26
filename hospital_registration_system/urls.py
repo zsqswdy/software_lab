@@ -14,8 +14,11 @@ urlpatterns = [
     path('confirmregistration/', ConfirmRegistrationView.as_view()),
     path('patientshowregistration/', PatientShowRegistrationView.as_view()),
     path('guide/', GuideView.as_view()),
-    path('traffic/', TrafficView.as_view()),
+    path('change/', ChangeView.as_view()),
 
     path('doctorcenter/', DoctorCenterView.as_view()),
     path('doctorshowregistration/', DoctorShowRegistrationView.as_view()),
+    path('update-profile/', UpdateProfileView.as_view()),
+    path('update-password/', UpdatePasswordView.as_view()),
+    path('filter-doctors/', FilterDoctorsView.as_view()),
 ]

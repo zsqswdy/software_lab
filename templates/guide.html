@@ -13,11 +13,13 @@
 			</div>
 			<div class="chaxun">
 				<span>出诊信息查询</span>
-				<input type="text" placeholder="科室名称">
-				<input type="text" placeholder="医生姓名">
-				<button>查询</button>
+                <form method="POST" action="/filter-doctors/">
+                    {% csrf_token %}
+                    <input name="departmentName" type="text" placeholder="科室名称">
+                    <input name="doctorName" type="text" placeholder="医生姓名">
+                    <button type="submit">查询</button>
+                </form>
 			</div>
-			
 			<p id="tishi">注：如果需要更多服务请询问现场工作人员!</p>
 		</div>
 	</body>

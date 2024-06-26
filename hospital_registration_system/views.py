@@ -6,12 +6,14 @@ import datetime
 import uuid
 from django.db.models import Q
 
+
 # Create your views here.
 class ChooseLoginView(View):
     '''选择身份登录'''
 
     def get(self, request):
         return render(request, 'chooselogin.html')
+
 
 class PatientLoginView(View):
     '''患者登录'''
@@ -30,6 +32,7 @@ class PatientLoginView(View):
 
         return HttpResponse("登录有问题")
 
+
 class DoctorLoginView(View):
     '''医生登录'''
 
@@ -46,6 +49,7 @@ class DoctorLoginView(View):
             return HttpResponseRedirect("/doctorcenter/")
 
         return HttpResponse("登录有问题")
+
 
 class PatientRegisterView(View):
     '''患者注册'''
@@ -73,6 +77,7 @@ class PatientRegisterView(View):
 
             return HttpResponseRedirect("/patientregister/")
 
+
 class PatientCenterView(View):
     '''患者界面'''
 
@@ -80,6 +85,7 @@ class PatientCenterView(View):
         patient_phone = request.session.get('patient')
         patientlist = Patient.objects.filter(phone=patient_phone)
         return render(request, 'patientcenter.html', {'patient_name': patientlist[0].name})
+
 
 class ChooseDepartmentView(View):
     '''选择科室'''
@@ -94,6 +100,7 @@ class ChooseDepartmentView(View):
         print(all_department_list)
 
         return render(request, 'choosedepartment.html', {'all_department_list': all_department_list})
+
 
 class ChooseDoctorAndTimeView(View):
     '''选择医生和时间'''
@@ -114,7 +121,8 @@ class ChooseDoctorAndTimeView(View):
 
         return render(request, 'choosedoctorandtime.html',
                       {'department_name': department_name, 'doctor_time_number_list': doctor_time_number_list,
-                               'department_id': department_id, 'tomorrow': tomorrow})
+                       'department_id': department_id, 'tomorrow': tomorrow})
+
 
 class ConfirmRegistrationView(View):
     '''确认挂号信息'''
@@ -193,6 +201,7 @@ class ConfirmRegistrationView(View):
 
         return HttpResponseRedirect('/patientshowregistration/')
 
+
 class PatientShowRegistrationView(View):
     '''患者展示挂号信息'''
 
@@ -211,9 +220,9 @@ class GuideView(View):
         return render(request, 'guide.html')
 
 
-class TrafficView(View):
+class ChangeView(View):
     def get(self, request):
-        return render(request, 'traffic.html')
+        return render(request, 'change.html')
 
 
 class DoctorCenterView(View):
@@ -255,3 +264,64 @@ class DoctorShowRegistrationView(View):
             register_list = []
 
         return render(request, 'doctorshowregistration.html', {'register_list': register_list})
+
+
+class UpdateProfileView(View):
+    def get(self, request):
+        patient = Patient.objects.get(phone=request.session['patient'])  # 根据session获取当前登录的患者
+        context = {
+            'patient': patient,
+        }
+        return render(request, 'update_profile.html', context)
+
+    def post(self, request):
+        # 获取表单数据并更新患者信息
+        patient = Patient.objects.get(phone=request.session['patient'])
+        patient.name = request.POST.get('name')
+        patient.sex = request.POST.get('sex')
+        patient.age = request.POST.get('age')
+        patient.save()
+
+        return HttpResponseRedirect("/patientcenter/")
+
+
+class UpdatePasswordView(View):
+    def get(self, request):
+        patient = Patient.objects.get(phone=request.session['patient'])
+        context = {
+            'patient': patient,
+        }
+        return render(request, 'update_password.html', context)
+
+    def post(self, request):
+        # 验证旧密码，然后更新新密码
+        old_password = request.POST.get('old_password')
+        new_password = request.POST.get('password')
+
+        patient = Patient.objects.get(phone=request.session['patient'])
+        if patient.password == old_password:
+            patient.password = new_password
+            patient.save()
+            return HttpResponse("修改密码成功")
+
+        return HttpResponse("修改密码失败")
+
+
+class FilterDoctorsView(View):
+    def post(self, request):
+        department_name = request.POST.get('departmentName')  # 获取筛选条件
+        doctor_name = request.POST.get('doctorName')
+
+        department = Department.objects.get(name=department_name)
+        doctor_list = Doctor.objects.filter(department_id=department.id, name=doctor_name)  # 当前科室里的医生
+
+        doctor_time_number_list = []  # 此医生及其的可预约时间和人数列表
+        for doctor in doctor_list:
+            doctor_id = doctor.id
+            doctor_time_number_list.append([doctor, TimeNumber.objects.get(doctor_id=doctor_id)])
+
+        tomorrow = (datetime.datetime.now() + datetime.timedelta(days=1)).strftime("%Y-%m-%d")
+
+        return render(request, 'choosedoctorandtime.html',
+              {'department_name': department_name, 'doctor_time_number_list': doctor_time_number_list,
+               'department_id': department.id, 'tomorrow': tomorrow})
